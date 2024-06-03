@@ -1,35 +1,96 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+function createStore(initStore) {
+  let state = initStore;
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  const getState = () => state;
+
+  const setState = (newState) => {
+    state = newState;
+
+    listeners.forEach((listener) => {
+      listener();
+    });
+  };
+
+  let listeners = new Set();
+
+  const subscribe = (listener) => {
+    listeners.add(listener);
+
+    return function () {
+      listeners.delete(listener);
+    };
+  };
+
+  return { getState, setState, subscribe };
 }
 
-export default App
+const {
+  getState,
+  setState: setStoreState,
+  subscribe,
+} = createStore({ count: 0 });
+
+function App() {
+  return (
+    <>
+      <Counter1 />
+      <Counter2 />
+    </>
+  );
+}
+
+function Counter1() {
+  const [state, setState] = useState(getState());
+  console.log(state, getState());
+
+  useEffect(() => {
+    const unsub = subscribe(() => setState({ count: getState().count + 1 }));
+
+    return () => unsub();
+  }, []);
+
+  return (
+    <div>
+      <h1>Counter 1 - {state.count}</h1>
+
+      <button
+        onClick={() => {
+          const nextState = getState().count + 1;
+          setStoreState({ count: nextState });
+        }}
+      >
+        Increment
+      </button>
+    </div>
+  );
+}
+
+function Counter2() {
+  const [state, setState] = useState(getState());
+  console.log(state, getState());
+
+  useEffect(() => {
+    const unsub = subscribe(() => setState({ count: getState().count + 1 }));
+
+    return () => unsub();
+  }, []);
+
+  return (
+    <div>
+      <h1>Counter 1 - {state.count}</h1>
+
+      <button
+        onClick={() => {
+          const nextState = getState().count + 1;
+          setStoreState({ count: nextState });
+        }}
+      >
+        Increment
+      </button>
+    </div>
+  );
+}
+export default App;
